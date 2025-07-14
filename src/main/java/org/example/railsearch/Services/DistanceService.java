@@ -49,6 +49,7 @@ public class DistanceService {
     }
     public Float Dijkstra(String stationFrom,String stationTo) {
         List<Station> graph=stationRepository.findJunctionStations();
+        System.out.println(graph.size());
         PriorityQueue<HashMap<Station,Float>> pq = new PriorityQueue<>((a,b)-> {
             Float valA = a.values().iterator().next();
             Float valB = b.values().iterator().next();
@@ -199,97 +200,7 @@ Float found=null;
             String stationToTmp=stops.get(i).getStation().getName();
             if(dist_tmp!=-1) distance+=dist_tmp;
             else{
-                Set<String> result=null;
-                ArrayList<String> intermediateStation=new ArrayList<>();
-
-                while(result==null) {
-                    ArrayList<Station> station_from= new ArrayList<Station>(findNearestJunctionStations(stationFromTmp));
-                    ArrayList<Station> station_to= new ArrayList<Station>(findNearestJunctionStations(stationToTmp));
-                    for(var s:station_from) {
-                        System.out.print(s.getName()+", ");
-                    }
-                    System.out.println();
-                    for(var s:station_to) {
-                        System.out.print(s.getName()+", ");
-                    }
-                    System.out.println();
-
-                    ArrayList<Station> finalStation_to = station_to;
-                    result=station_from.stream()
-                            .map(Station::getName)                    // ekstrakcja nazw stacji
-                            .distinct()
-                            .filter(name -> finalStation_to.stream()       // porównanie po nazwach
-                                    .map(Station::getName)
-                                    .anyMatch(name::equals))
-                            .collect(Collectors.toSet());
-                    if(result!=null && !result.isEmpty()) {
-                        intermediateStation.add(result.iterator().next());
-                        for (var iS : intermediateStation) {
-                           // System.out.println(iS);
-                        }
-                    }
-                    else {
-                        ArrayList<Station> station_from_tmp=new ArrayList<>(station_from);
-                        ArrayList<Station> station_to_tmp=new ArrayList<>(station_to);
-                        for (int j = 0; j < station_from_tmp.size(); j++) {
-                            if(findDistanceBetweenJunctionStations(station_from_tmp.get(j).getName(),stationFromTmp)!=-1&&distanceRepository.findDistancesByStationName(station_from_tmp.get(j).getName()).size()==2) {
-                                station_from_tmp.remove(j);
-                            }
-                        }
-                        for (int j = 0; j < station_to_tmp.size(); j++) {
-                            if (findDistanceBetweenJunctionStations(station_to_tmp.get(j).getName(), stationToTmp) != -1&&distanceRepository.findDistancesByStationName(station_to_tmp.get(j).getName()).size()==2) {
-                                station_to_tmp.remove(j);
-                            }
-                        }
-                        System.out.println("------");
-                        for(var s:station_from_tmp) {
-                            System.out.println(s.getName());
-                        }
-                        for(var toTmp:station_to_tmp) {
-                            System.out.println(toTmp.getName());
-                        }
-                        if(station_from_tmp.size()< station_to_tmp.size()) {
-                            for (int j = 0; j < station_from_tmp.size(); j++) {
-                                for (int k = 0; k < station_to_tmp.size(); k++) {
-
-                                    if (findDistanceBetweenJunctionStations(station_to_tmp.get(k).getName(), station_from_tmp.get(j).getName()) != -1) {
-                                        station_to = new ArrayList<>(findNearestJunctionStations(station_to_tmp.get(k).getName()));
-                                        station_from = new ArrayList<>(findNearestJunctionStations(station_from_tmp.get(j).getName()));
-                                        intermediateStation.add(station_from_tmp.get(j).getName());
-                                        intermediateStation.add(station_to_tmp.get(k).getName());
-                                    }
-                                }
-                            }
-                        }
-                        else{
-                            for (int j = 0; j < station_to_tmp.size(); j++) {
-                                for (int k = 0; k < station_from_tmp.size(); k++) {
-
-                                    if (findDistanceBetweenJunctionStations(station_to_tmp.get(j).getName(), station_from_tmp.get(k).getName()) != -1) {
-                                        station_to = new ArrayList<>(findNearestJunctionStations(station_to_tmp.get(j).getName()));
-                                        station_from = new ArrayList<>(findNearestJunctionStations(station_from_tmp.get(k).getName()));
-                                        intermediateStation.add(station_from_tmp.get(k).getName());
-                                        intermediateStation.add(station_to_tmp.get(j).getName());
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                if(!intermediateStation.isEmpty()) {
-                    for (var iS : intermediateStation) {
-                        System.out.println("i "+iS);
-                    }
-                    System.out.println("------");
-                    float tmp =0.0F;
-                    for (int j = 1; j < intermediateStation.size(); j++) {
-                        tmp+=findDistanceBetweenJunctionStations(intermediateStation.get(j-1), intermediateStation.get(j));
-                    }
-                    System.out.println(stationFromTmp+"-"+intermediateStation.get(0)+" "+intermediateStation.get(intermediateStation.size()-1)+"-"+stationToTmp);
-                    float tmp_ = tmp+findDistanceBetweenJunctionStations(stationFromTmp, intermediateStation.get(0)) + findDistanceBetweenJunctionStations(intermediateStation.get(intermediateStation.size()-1), stationToTmp);
-                    System.out.println(tmp_);
-                    distance += tmp_;
-                }
+                distance+=Dijkstra(stationFromTmp,stationToTmp);
             }
         }
         return distance;
