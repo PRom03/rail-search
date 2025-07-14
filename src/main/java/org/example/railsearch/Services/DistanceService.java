@@ -49,7 +49,7 @@ public class DistanceService {
     }
     public Float Dijkstra(String stationFrom,String stationTo) {
         List<Station> graph=stationRepository.findAll();
-        System.out.println(graph.size());
+        //System.out.println(graph.size());
         PriorityQueue<HashMap<Station,Float>> pq = new PriorityQueue<>((a,b)-> {
             Float valA = a.values().iterator().next();
             Float valB = b.values().iterator().next();
@@ -80,13 +80,17 @@ public class DistanceService {
 //
 //        }
 Float found=null;
+        List<String>  intermediate=new ArrayList<>();
             while (!pq.isEmpty()||found==null) {               // The main loop
                 HashMap<Station,Float> u=pq.poll();
                 assert u != null;
                 var curr=u.entrySet().iterator().next().getKey();
                 List<Station> neighbors=stationRepository.findNeighboringStations((curr.getId()));
                 for(var neighbor:neighbors) {
-                    System.out.println(neighbor.getName()+" "+dist.get(neighbor));
+                    if(dist.get(neighbor)==0.0F&&!intermediate.contains(neighbor.getName())) {
+                        intermediate.add(neighbor.getName());
+                        System.out.println(neighbor.getName());
+                    }
                 }
 //                var it_=u.keySet().iterator();
 //                while (it_.hasNext()) {

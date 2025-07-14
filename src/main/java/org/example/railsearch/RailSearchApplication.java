@@ -54,15 +54,5 @@ public class RailSearchApplication implements CommandLineRunner {
         String stationFrom = "Warszawa Wschodnia";
         String stationTo = "Iława Główna";
 
-        //System.out.println(trainService.getTrainByName("IC 12104 CZECHOWICZ").getId());
-        List<String> pendolinoJunctions=new ArrayList<>(Arrays.asList(
-                "Warszawa Praga","Legionowo","Nasielsk","Działdowo"));
-        for (int i = 1; i < pendolinoJunctions.size(); i++) {
-            sum+= distanceService.findDistanceBetweenJunctionStations(pendolinoJunctions.get(i-1), pendolinoJunctions.get(i));
-
-        }
-        sum+=distanceService.findDistanceBetweenJunctionStations(stationFrom, pendolinoJunctions.get(0))+distanceService.findDistanceBetweenJunctionStations(pendolinoJunctions.get(pendolinoJunctions.size()-1), stationTo);
-        System.out.println(sum);
-
     }
 }
