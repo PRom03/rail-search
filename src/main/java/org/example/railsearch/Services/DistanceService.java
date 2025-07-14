@@ -48,7 +48,7 @@ public class DistanceService {
         return stations;
     }
     public Float Dijkstra(String stationFrom,String stationTo) {
-        List<Station> graph=stationRepository.findJunctionStations();
+        List<Station> graph=stationRepository.findAll();
         System.out.println(graph.size());
         PriorityQueue<HashMap<Station,Float>> pq = new PriorityQueue<>((a,b)-> {
             Float valA = a.values().iterator().next();
@@ -84,7 +84,7 @@ Float found=null;
                 HashMap<Station,Float> u=pq.poll();
                 assert u != null;
                 var curr=u.entrySet().iterator().next().getKey();
-                List<Station> neighbors=findNearestJunctionStations(curr.getName()).stream().distinct().toList();
+                List<Station> neighbors=stationRepository.findNeighboringStations((curr.getId()));
                 for(var neighbor:neighbors) {
                     System.out.println(neighbor.getName()+" "+dist.get(neighbor));
                 }
@@ -94,7 +94,8 @@ Float found=null;
 //                }
                 for(var neighbor:neighbors) {
                    // System.out.println(neighbor.getName());
-                    Float dstnc=findDistanceBetweenJunctionStations(neighbor.getName(),curr.getName());
+                    //System.out.println(neighbor.getName()+" "+curr.getName());
+                    Float dstnc=findDistanceBetweenNeighboring(neighbor.getId(),curr.getId()).getDistance().floatValue();
                     float alt=0;
                     alt = dist.get(curr) +dstnc;
                     if(dist.get(neighbor)==null) continue;
@@ -195,13 +196,9 @@ Float found=null;
         float distance= 0.0F;
         System.out.println(stops.size());
         for(int i=1;i<stops.size();i++){
-            Float dist_tmp=findDistanceBetweenJunctionStations(stops.get(i-1).getStation().getName(),stops.get(i).getStation().getName());
-            String stationFromTmp=stops.get(i-1).getStation().getName();
-            String stationToTmp=stops.get(i).getStation().getName();
-            if(dist_tmp!=-1) distance+=dist_tmp;
-            else{
-                distance+=Dijkstra(stationFromTmp,stationToTmp);
-            }
+
+                distance+=Dijkstra(stops.get(i-1).getStation().getName(),stops.get(i).getStation().getName());
+
         }
         return distance;
     }

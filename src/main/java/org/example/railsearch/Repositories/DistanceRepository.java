@@ -15,7 +15,7 @@ import java.util.List;
 public interface DistanceRepository extends JpaRepository<Distance, Long> {
     @Query("""
            SELECT d
-           FROM Distance d
+           FROM Distance d JOIN FETCH d.station1 JOIN FETCH d.station2
            WHERE ( d.station1.id = :id1 AND d.station2.id = :id2 )
               OR ( d.station1.id = :id2 AND d.station2.id = :id1 )
            """)
