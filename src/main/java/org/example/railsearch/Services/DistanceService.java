@@ -49,78 +49,49 @@ public class DistanceService {
     }
     public Float Dijkstra(String stationFrom,String stationTo) {
         List<Station> graph=stationRepository.findAll();
-        //System.out.println(graph.size());
-        PriorityQueue<HashMap<Station,Float>> pq = new PriorityQueue<>((a,b)-> {
-            Float valA = a.values().iterator().next();
-            Float valB = b.values().iterator().next();
-            return Float.compare(valA, valB);
-        });
-        Station prev=null;
-        HashMap<Station,Float> hm=new HashMap<Station, Float>();
-        hm.put(stationRepository.findStationByName(stationFrom),0.0F);
-        pq.add(hm);
+        HashMap<Station,Float> dist_=new HashMap<>();
         HashMap<Station,Float> dist=new HashMap<>();
         dist.put(stationRepository.findStationByName(stationFrom),0.0F);
-
+        dist_.put(stationRepository.findStationByName(stationFrom),0.0F);
         for (var v :graph) {
             if (v.getName().compareTo(stationFrom)!=0) {
-                prev = null;
                 dist.put(v, 1500.0F);
-                HashMap<Station,Float> hm_=new HashMap<Station, Float>();
-                hm_.put(v,1500.0F);// Unknown distance from source to v
-                pq.add(hm_);
-
+                dist_.put(v, 1500.0F);
             }
         }
-//        var it=dist.entrySet().iterator();
-//        for (; it.hasNext(); ) {
-//            Map.Entry<Station,Float> kv=(Map.Entry<Station,Float>) it.next();
-//            System.out.println(kv.getKey().getName()+" "+kv.getValue());
-//
-//
-//        }
-Float found=null;
-        List<String>  intermediate=new ArrayList<>();
-            while (!pq.isEmpty()||found==null) {               // The main loop
-                HashMap<Station,Float> u=pq.poll();
-                assert u != null;
-                var curr=u.entrySet().iterator().next().getKey();
-                List<Station> neighbors=stationRepository.findNeighboringStations((curr.getId()));
-                for(var neighbor:neighbors) {
-                    if(dist.get(neighbor)==0.0F&&!intermediate.contains(neighbor.getName())) {
-                        intermediate.add(neighbor.getName());
-                        System.out.println(neighbor.getName());
-                    }
+        Float found=null;
+        List<String> intermediate=new ArrayList<>();
+        while (found==null) {
+            Map.Entry<Station,Float> u = null;
+            for (Map.Entry<Station,Float> entry : dist_.entrySet()) {
+                if (u == null || entry.getValue() < u.getValue()) {
+                    u= entry;
                 }
-//                var it_=u.keySet().iterator();
-//                while (it_.hasNext()) {
-//                    System.out.println(it_.next().getName());
-//                }
-                for(var neighbor:neighbors) {
-                   // System.out.println(neighbor.getName());
-                    //System.out.println(neighbor.getName()+" "+curr.getName());
-                    Float dstnc=findDistanceBetweenNeighboring(neighbor.getId(),curr.getId()).getDistance().floatValue();
-                    float alt=0;
-                    alt = dist.get(curr) +dstnc;
-                    if(dist.get(neighbor)==null) continue;
-                    if (alt < dist.get(neighbor)) {
-                        prev = u.keySet().iterator().next();
-                        dist.put(neighbor, alt);
-                        pq.removeIf(entry -> entry.containsKey(neighbor));
-                        HashMap<Station, Float> hm_ = new HashMap<Station, Float>();
-                        hm_.put(neighbor,alt);
-                        pq.add(hm_);
-                        if(neighbor.getName().equals(stationTo)) {
-                            found=dist.get(neighbor);
-                            break;
-                        }
-                    }
-                    if(found!=null) break;
-                }
-                if(found!=null) break;
             }
-
-         //   return (dist,prev)
+            assert u != null;
+            dist_.remove(u.getKey());
+            var curr=u.getKey();
+            List<Station> neighbors=stationRepository.findNeighboringStations((curr.getId()));
+            for(var neighbor:neighbors) {
+                if(dist.get(neighbor)==0.0F&&!intermediate.contains(neighbor.getName())) {
+                    intermediate.add(neighbor.getName());
+                    System.out.println(neighbor.getName());
+                }
+            }
+            for(var neighbor:neighbors) {
+                Float dstnc=findDistanceBetweenNeighboring(neighbor.getId(),curr.getId()).getDistance().floatValue();
+                float alt = dist.get(curr) + dstnc;
+                if(dist.get(neighbor)==null) continue;
+                if (alt < dist.get(neighbor)) {
+                    dist.put(neighbor, alt);
+                    dist_.put(neighbor,alt);
+                    if(neighbor.getName().equals(stationTo)) {
+                        found=dist.get(neighbor);
+                        break;
+                    }
+                }
+            }
+        }
         return found;
     }
     public ArrayList<Station> findNearestJunctionStations(String stationName){
