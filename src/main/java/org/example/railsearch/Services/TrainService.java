@@ -193,14 +193,14 @@ public record ConnectionStep(Station station, LocalTime time, Train train) {
         }
     }
 
-    public Pair<Duration, List<ConnectionSegment>> findFastestConnection(
+    public List<ConnectionSegment> findFastestConnection(
             String stationFrom,
             String stationTo,
             LocalTime startTime
     ) {
         Station startStation = stationRepository.findStationByName(stationFrom);
         Station endStation   = stationRepository.findStationByName(stationTo);
-        if (startStation == null || endStation == null) return Pair.of(null, List.of());
+        if (startStation == null || endStation == null) return List.of();
 
         final Duration minTransfer = Duration.ofMinutes(5);
         final int TRANSFER_LIMIT = 10; // ogranicz liczbę rozważanych odjazdów przy transferze
@@ -233,7 +233,7 @@ public record ConnectionStep(Station station, LocalTime time, Train train) {
             }
         }
 
-        if (pq.isEmpty()) return Pair.of(null, List.of());
+        if (pq.isEmpty()) return List.of();
 
         Stop foundArrivalStop = null;
         Train foundTrain = null;
@@ -304,7 +304,7 @@ public record ConnectionStep(Station station, LocalTime time, Train train) {
         } // koniec pętli PQ
 
         if (foundArrivalStop == null) {
-            return Pair.of(null, List.of());
+            return List.of();
         }
 
         // --- REKONSTRUKCJA JAKO ODCINKI ---
@@ -356,15 +356,67 @@ public record ConnectionStep(Station station, LocalTime time, Train train) {
 
         Collections.reverse(path);
         Duration total = Duration.between(startTime, foundArrivalTime);
-        return Pair.of(total, path);
+        return path;
+    }
+
+    // --- wrapper: wyszukuje kolejne połączenia od pierwszego odjazdu znalezionego połączenia do końca doby ---
+// zwraca listę możliwych połączeń (każde to Pair<Duration, List<ConnectionSegment>>)
+    public List<List<ConnectionSegment>> findAllConnectionsForDay(
+            String stationFrom,
+            String stationTo,
+            LocalTime startTime
+    ) {
+        List<List<ConnectionSegment>> results = new ArrayList<>();
+        LocalTime endOfDay = LocalTime.of(23, 59, 59);
+        LocalTime searchFrom = startTime;
+
+        // zabezpieczenie przed niekończącą się pętlą (safety limit)
+        final int MAX_RESULTS = 200;
+        int counter = 0;
+        Set<LocalTime> seenFirstDepartures = new HashSet<>();
+
+        while (!searchFrom.isAfter(endOfDay) && counter < MAX_RESULTS) {
+            List<ConnectionSegment> res = findFastestConnection(stationFrom, stationTo, searchFrom);
+            if (res == null ) {
+                // brak dalszych połączeń
+                break;
+            }
+
+            List<ConnectionSegment> segments = res;
+            // zabezpiecz: jeśli brak segmentów (coś dziwnego), przerywamy
+            if (segments.isEmpty()) break;
+
+            LocalTime firstDep = segments.get(0).departure();
+            // jeżeli już widzieliśmy połączenie z tym samym pierwszym odjazdem -> przesuń dalej
+            if (seenFirstDepartures.contains(firstDep)) {
+                searchFrom = firstDep.plusSeconds(1);
+                continue;
+            }
+
+            // dodaj wynik
+            results.add(res);
+            seenFirstDepartures.add(firstDep);
+            counter++;
+
+            // ustaw następny punkt startowy na chwilę po odjeździe pierwszego pociągu z tego połączenia
+            searchFrom = firstDep.plusSeconds(1);
+
+            // jeśli przekroczyliśmy koniec doby — przerwij
+            if (searchFrom.isAfter(endOfDay)) break;
+        }
+
+        return results;
     }
 
 
-
     public void getConns(String stationFrom,String stationTo,LocalTime startTime){
-            List<ConnectionSegment> list = findFastestConnection(stationFrom, stationTo, startTime).getSecond();
-            for (ConnectionSegment cs : list) {
-                System.out.println(cs.toString());
+            List<List<ConnectionSegment>> list = findAllConnectionsForDay(stationFrom, stationTo, startTime);
+            for (List<ConnectionSegment> css : list) {
+                for(ConnectionSegment cs:css)
+                {
+                    System.out.println(cs.toString());
+                    System.out.print("\n---\n");
+                }
             }
         }
 }
