@@ -4,8 +4,10 @@ import jakarta.transaction.Transactional;
 import org.example.railsearch.Entities.Distance;
 import org.example.railsearch.Entities.Station;
 import org.example.railsearch.Entities.Stop;
+import org.example.railsearch.Entities.Train;
 import org.example.railsearch.Repositories.DistanceRepository;
 import org.example.railsearch.Repositories.StationRepository;
+import org.example.railsearch.Repositories.TrainRepository;
 import org.javatuples.Triplet;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -20,13 +22,15 @@ public class DistanceService {
     private final StationRepository stationRepository;
     private final StopService stopService;
     private final TrainService trainService;
+    private final TrainRepository trainRepository;
 
-
-    public DistanceService(DistanceRepository distanceRepository, StationRepository stationRepository, StopService stopService, TrainService trainService) {
+    public DistanceService(DistanceRepository distanceRepository, StationRepository stationRepository, StopService stopService, TrainService trainService, TrainRepository trainRepository, TrainRepository trainRepository1) {
         this.distanceRepository = distanceRepository;
         this.stationRepository = stationRepository;
+
         this.stopService = stopService;
         this.trainService = trainService;
+        this.trainRepository = trainRepository1;
     }
 
 
@@ -47,7 +51,7 @@ public class DistanceService {
         }
         return stations;
     }
-    public Float Dijkstra(String stationFrom,String stationTo) {
+    public Pair<Float,List<String>> Dijkstra(String stationFrom,String stationTo) {
         List<Station> graph=stationRepository.findAll();
         HashMap<Station,Float> dist_=new HashMap<>();
         HashMap<Station,Float> dist=new HashMap<>();
@@ -75,7 +79,7 @@ public class DistanceService {
             for(var neighbor:neighbors) {
                 if(dist.get(neighbor)==0.0F&&!intermediate.contains(neighbor.getName())) {
                     intermediate.add(neighbor.getName());
-                    System.out.println(neighbor.getName());
+                    //System.out.println(neighbor.getName());
                 }
             }
             for(var neighbor:neighbors) {
@@ -92,7 +96,7 @@ public class DistanceService {
                 }
             }
         }
-        return found;
+        return Pair.of(found,intermediate);
     }
     public ArrayList<Station> findNearestJunctionStations(String stationName){
         String station1 = stationName;
@@ -172,10 +176,22 @@ public class DistanceService {
         System.out.println(stops.size());
         for(int i=1;i<stops.size();i++){
 
-                distance+=Dijkstra(stops.get(i-1).getStation().getName(),stops.get(i).getStation().getName());
+                distance+=Dijkstra(stops.get(i-1).getStation().getName(),stops.get(i).getStation().getName()).getFirst();
+                List<String> intermediate=Dijkstra(stops.get(i-1).getStation().getName(),stops.get(i).getStation().getName()).getSecond();
+                for(int j=0;j<intermediate.size();j++){
+                    System.out.println(intermediate.get(j));
+                }
 
         }
         return distance;
+    }
+    public List<List<Train>> getTrains(String stationFrom, String stationTo){;
+        List<String> route=Dijkstra(stationFrom,stationTo).getSecond();
+        List <List<Train>> trains=new ArrayList<>();
+        for (int i=1;i<route.size();i++){
+            trains.add(trainRepository.getTrainsByStations(stationRepository.getStationByName(route.get(i-1)).getId(),stationRepository.getStationByName(route.get(i)).getId()));
+        }
+        return trains.stream().distinct().collect(Collectors.toList());
     }
 //    public Float getDistanceForTrainTest(String stationFrom, String stationTo, String trainName){
 //        List<Stop> stops = stopService.findStopsByTrain(trainService.getTrainByName(trainName).getId(),stationRepository.getStationByName(stationFrom).getId(),stationRepository.getStationByName(stationTo).getId());

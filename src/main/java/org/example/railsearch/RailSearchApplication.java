@@ -17,6 +17,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.reactive.TransactionalOperator;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,11 +49,28 @@ public class RailSearchApplication implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        float sum = 0;
-
-
-        String stationFrom = "Warszawa Wschodnia";
-        String stationTo = "Iława Główna";
-
+//        float sum = 0;
+//
+//
+//        String stationFrom = "Siedlce";
+//        String stationTo = "Lublin Główny";
+//        List<List<Integer>> pairs=trainRepository.getTrainPairsByStations(stationRepository.getStationByName(stationFrom).getId(), stationRepository.getStationByName(stationTo).getId());
+//        for (int i = 0; i < pairs.size(); i++) {
+//            //System.out.println(pairs.get(i).get(0).+"\t"+pairs.get(i).get(1));
+//            List<Integer> stops1=stationRepository.findStationsInStopsForTrain(pairs.get(i).get(0));
+//            List<Integer> stops2=stationRepository.findStationsInStopsForTrain(pairs.get(i).get(1));
+//
+//            List<Integer> common = stops1.stream()
+//                    .distinct()
+//                    .filter(stops2::contains)
+//                    .toList();
+//            for (Integer stop : common) {
+//                stationRepository.findById(Long.valueOf(stop)).ifPresent(station -> {
+//                    System.out.println(station.getName());
+//                });
+//            }
+//            System.out.println("----");
+//        }
+trainService.getConns("Siedlce","Lublin Główny", LocalTime.now());
     }
 }

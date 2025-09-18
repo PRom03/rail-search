@@ -32,5 +32,11 @@ public class Station {
     public void setName(String name) {
         this.name = name;
     }
+    @Override
+    public boolean equals(Object st2) {
+        Station s2 = (Station) st2;
+        if (this.id == ((Station) st2).id) return true;
+        else return false;
+    }
 
 }

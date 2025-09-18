@@ -13,7 +13,7 @@ public class Stop {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "train_id", nullable = false)
     private Train train;
 
@@ -30,7 +30,7 @@ public class Stop {
     @Column(name = "track", nullable = false, length = 4)
     private String track;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "station_id", nullable = false)
     private Station station;
 
@@ -91,6 +91,6 @@ public class Stop {
     }
     @Override
     public String toString() {
-        return getStation().getName()+" "+getArrivalTime()+" "+getDepartureTime()+" "+getPlatform()+" "+getTrack();
+        return getStation().getName()+" "+getArrivalTime()+" "+getDepartureTime()+" "+getPlatform()+" "+getTrack()+" "+getTrain().getName();
     }
 }

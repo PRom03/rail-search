@@ -2,6 +2,7 @@ package org.example.railsearch.Controllers;
 
 import org.example.railsearch.Entities.Station;
 import org.example.railsearch.Entities.Stop;
+import org.example.railsearch.Entities.Train;
 import org.example.railsearch.Repositories.DistanceRepository;
 import org.example.railsearch.Repositories.StationRepository;
 import org.example.railsearch.Services.DistanceService;
@@ -36,6 +37,7 @@ public DistanceController(DistanceService distanceService, StopService stopServi
     }
     public record StationResponse(String name) {
     }
+    public record TrainResponse(String name) {}
         // GET API to fetch all details
         @RequestMapping(value="/distance/{stationFrom}/{stationTo}",method= RequestMethod.GET,  produces="application/json")
         public DistanceResponse getDistance(@PathVariable String stationFrom, @PathVariable String stationTo) {
@@ -44,7 +46,7 @@ public DistanceController(DistanceService distanceService, StopService stopServi
         }
     @RequestMapping(value="/distance-train-test/{stationFrom}/{stationTo}",method= RequestMethod.GET,  produces="application/json")
     public DistanceResponse getDistanceForTrainTest(@PathVariable String stationFrom, @PathVariable String stationTo) {
-        int distance=Math.round(distanceService.Dijkstra(stationFrom, stationTo));
+        int distance=Math.round(distanceService.Dijkstra(stationFrom, stationTo).getFirst());
         return new DistanceResponse(distance,(distance!=-1)?"success":"fail");
     }
     @RequestMapping(value="/distance-train/{stationFrom}/{stationTo}/{trainName}",method= RequestMethod.GET,  produces="application/json")
@@ -61,6 +63,18 @@ public DistanceController(DistanceService distanceService, StopService stopServi
             stationResponse.add(new StationResponse(stations.get(i).getName()));
         }
         return stationResponse;
+    }
+    @RequestMapping(value="/trains/{stationFrom}/{stationTo}",method = RequestMethod.GET,produces = "application/json")
+    public List<TrainResponse> getTrains(@PathVariable String stationFrom, @PathVariable String stationTo) {
+        List<List<Train>> trains=distanceService.getTrains(stationFrom,stationTo);
+        List<TrainResponse> trainResponses = new ArrayList<>();
+        for (int i = 0; i < trains.size(); i++) {
+            List<Train> trainz = trains.get(i);
+            for (int j = 0; j <trainz.size(); j++) {
+                trainResponses.add(new TrainResponse(trainz.get(j).getName()));
+            }
+        }
+        return trainResponses;
     }
 
 }

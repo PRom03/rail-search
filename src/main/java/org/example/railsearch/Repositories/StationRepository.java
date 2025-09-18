@@ -28,4 +28,8 @@ SELECT
     @Query("""
 SELECT DISTINCT s from Station s JOIN Distance d on d.station1.id=s.id or d.station2.id=s.id where ((d.station1.id=(SELECT s.id from Station s where s.id=:id) ) or (d.station2.id=(SELECT s.id from Station s where s.id=:id))) AND s.id!=:id""")
     List<Station> findNeighboringStations(Integer id);
+    @Query("""
+        SELECT s.station.id from Stop s where s.train.id=:id
+""")
+    List<Integer> findStationsInStopsForTrain(int id);
 }
