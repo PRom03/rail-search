@@ -71,6 +71,6 @@ public class RailSearchApplication implements CommandLineRunner {
 //            }
 //            System.out.println("----");
 //        }
-trainService.getConns("Siedlce","Lublin Główny", LocalTime.now());
+//trainService.getConns("Siedlce","Lublin Główny", LocalTime.now());
     }
 }
