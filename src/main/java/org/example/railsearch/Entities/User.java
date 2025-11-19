@@ -31,7 +31,8 @@ public class User {
     @ManyToOne(fetch = FetchType.EAGER, optional = true)
     @JoinColumn(name = "discount_id", nullable = true)
     private Discount discount;
-
+    @Column(name="card_token",length = 32,nullable = true)
+    private String cardToken;
 
 
     public Integer getId() {
@@ -94,4 +95,11 @@ public class User {
     @Column(name = "role")
     private UserRole role = UserRole.client;
 
+    public String getCardToken() {
+        return cardToken;
+    }
+
+    public void setCardToken(String cardToken) {
+        this.cardToken = cardToken;
+    }
 }

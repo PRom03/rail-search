@@ -1,8 +1,6 @@
-package org.example.railsearch;
+package org.example.railsearch.Entities;
 
 import jakarta.persistence.*;
-import org.example.railsearch.Entities.Discount;
-import org.example.railsearch.Entities.User;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
@@ -41,6 +39,11 @@ public class Ticket {
 
     @Column(name = "status", nullable = false, length = 16)
     private String status;
+    @Column(name="ext_id",length=32)
+    private String extId;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name="payment_id")
+    private Payment payment;
 
     public Integer getId() {
         return id;
@@ -106,4 +109,19 @@ public class Ticket {
         this.status = status;
     }
 
+    public String getExtId() {
+        return extId;
+    }
+
+    public void setExtId(String extId) {
+        this.extId = extId;
+    }
+
+    public Payment getPayment() {
+        return payment;
+    }
+
+    public void setPayment(Payment payment) {
+        this.payment = payment;
+    }
 }

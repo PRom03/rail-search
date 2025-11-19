@@ -21,4 +21,7 @@ public class StopService {
 
 
     }
+    public List<Stop> getStopsBetweenIds(Integer fromId, Integer toId,Integer trainId) {
+        return stopRepository.getStopsBetweenIds(fromId, toId,trainId);
+    }
 }

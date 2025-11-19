@@ -1,4 +1,4 @@
-package org.example.railsearch;
+package org.example.railsearch.Entities;
 
 import jakarta.persistence.*;
 

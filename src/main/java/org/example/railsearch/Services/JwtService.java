@@ -36,8 +36,7 @@ public class JwtService {
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+                .getBody().get("email",String.class);
     }
     private boolean isExpired(String token) {
         Date exp = Jwts.parser().setSigningKey(key)

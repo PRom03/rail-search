@@ -50,7 +50,9 @@ WHERE s.station.id = :destId
 """
         )
    Stop isTrainToDestination(@Param("trainId") Integer trainId,@Param("fromId") Integer fromId,@Param("destId") Integer destId);
-
-
+    @Query("""
+select s from Stop s where s.id>:fromId and s.id<:toId and s.train.id=:trainId
+""")
+    List<Stop> getStopsBetweenIds(Integer fromId, Integer toId,Integer trainId);
 }
 //CASE WHEN COUNT(s) > 0 THEN TRUE ELSE FALSE END

@@ -21,7 +21,7 @@ public class Discount {
     @Column(name = "value", nullable = false, precision = 10, scale = 2)
     private BigDecimal value;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "transporter_id", nullable = false)
     private Transporter transporter;
 

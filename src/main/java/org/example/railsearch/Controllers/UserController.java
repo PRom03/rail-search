@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
 public class UserController {
 
     @Autowired
@@ -76,5 +76,20 @@ public class UserController {
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
     }
+    @PostMapping("/{userId}/card-token")
+    public User setCardToken(@RequestHeader("Authorization") String token,@PathVariable Integer userId,@RequestBody UserService.SaveCardTokenRequest body) {
+        if(token == null || !token.startsWith("Bearer ")) {
+            return  null;
+        }
+        return userService.setCardToken(userId, body.cardToken());
+    }
+    @PostMapping("/card-token")
+    public ResponseEntity<?> getCardToken(@RequestHeader("Authorization") String token,@RequestBody UserService.GetCardTokenRequest body) {
+        if(token == null || !token.startsWith("Bearer ")) {
+            return null;
+        }
+        return new ResponseEntity<>(Map.of("cardToken",userService.getCardToken(Long.valueOf(body.userId()))),HttpStatus.OK);
+    }
+
 }
 

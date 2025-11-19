@@ -14,19 +14,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/discounts")
+@RequestMapping("/discounts")
 public class DiscountController {
     @Autowired
     private DiscountService discountService;
 
-    public record DiscountResponse(String name, BigDecimal value) {}
-    @GetMapping("/")
-    public List<DiscountResponse> getDiscounts() {
-        List<Discount> discounts = discountService.findAll();
-        List<DiscountResponse> discountResponses = new ArrayList<>();
-        for (int i = 0; i < discounts.size(); i++) {
-            discountResponses.add(new DiscountResponse(discounts.get(i).getName(), discounts.get(i).getValue()));
-        }
-        return discountResponses;
+    @GetMapping(value = "/",produces = "application/json")
+    public List<Discount> getDiscounts() {
+        return discountService.findAll();
+
     }
 }

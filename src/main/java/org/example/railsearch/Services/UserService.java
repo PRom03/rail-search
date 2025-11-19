@@ -15,9 +15,12 @@ public class UserService {
     @Autowired
     private  PasswordEncoder passwordEncoder;
 
+    public record GetCardTokenRequest(Integer userId){}
 
-
-
+    public record SaveCardTokenRequest(String cardToken){}
+    public String getCardToken(Long userId){
+        return userRepository.findById(userId).get().getCardToken();
+    }
 
     public Optional<User> getUserByEmail(String email) {
         return Optional.ofNullable(userRepository.findByEmail(email));
@@ -27,6 +30,12 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
+    public User setCardToken(Integer userId,String cardToken) {
+        User user=userRepository.findById(Long.valueOf(userId)).orElse(null);
+        assert user != null;
+        user.setCardToken(cardToken);
+        return userRepository.save(user);
+    }
 
     public User updateUser(Long id, User userDetails) {
         return userRepository.findById(id)
@@ -34,9 +43,9 @@ public class UserService {
                     user.setFirstname(userDetails.getFirstname());
                     user.setLastname(userDetails.getLastname());
                     user.setEmail(userDetails.getEmail());
-                    user.setPassword(userDetails.getPassword());
+                    user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
                     user.setDiscount(userDetails.getDiscount());
-                    user.setRole(userDetails.getRole());
+
                     return userRepository.save(user);
                 })
                 .orElseThrow(() -> new RuntimeException("User not found with id " + id));

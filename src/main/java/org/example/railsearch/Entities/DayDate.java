@@ -1,4 +1,4 @@
-package org.example.railsearch;
+package org.example.railsearch.Entities;
 
 import jakarta.persistence.*;
 
@@ -6,7 +6,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "date", schema = "public")
-public class Date {
+public class DayDate {
     @Id
     @SequenceGenerator(name = "date_id_gen", sequenceName = "payment_id_seq", allocationSize = 1)
     @Column(name = "date", nullable = false)

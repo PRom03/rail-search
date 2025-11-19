@@ -1,7 +1,6 @@
-package org.example.railsearch;
+package org.example.railsearch.Entities;
 
 import jakarta.persistence.*;
-import org.example.railsearch.Entities.Train;
 
 @Entity
 @Table(name = "train_car", schema = "public")
@@ -12,14 +11,14 @@ public class TrainCar {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "cartype_id")
     private Cartype cartype;
 
     @Column(name = "number")
     private Integer number;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "train_id")
     private Train train;
 

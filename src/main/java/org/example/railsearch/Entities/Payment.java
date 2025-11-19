@@ -1,4 +1,4 @@
-package org.example.railsearch;
+package org.example.railsearch.Entities;
 
 import jakarta.persistence.*;
 
@@ -11,9 +11,9 @@ public class Payment {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "method_id", nullable = false)
-    private org.example.railsearch.PaymentMethod method;
+    private PaymentMethod method;
 
     @Column(name = "external_id", length = 10)
     private String externalId;
@@ -26,11 +26,11 @@ public class Payment {
         this.id = id;
     }
 
-    public org.example.railsearch.PaymentMethod getMethod() {
+    public PaymentMethod getMethod() {
         return method;
     }
 
-    public void setMethod(org.example.railsearch.PaymentMethod method) {
+    public void setMethod(PaymentMethod method) {
         this.method = method;
     }
 

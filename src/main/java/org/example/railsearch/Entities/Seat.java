@@ -1,4 +1,4 @@
-package org.example.railsearch;
+package org.example.railsearch.Entities;
 
 import jakarta.persistence.*;
 
@@ -20,9 +20,9 @@ public class Seat {
     @Column(name = "class", nullable = false)
     private Integer classField;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "train_car_id", nullable = false)
-    private org.example.railsearch.TrainCar trainCar;
+    private TrainCar trainCar;
 
     public Integer getId() {
         return id;
@@ -56,11 +56,11 @@ public class Seat {
         this.classField = classField;
     }
 
-    public org.example.railsearch.TrainCar getTrainCar() {
+    public TrainCar getTrainCar() {
         return trainCar;
     }
 
-    public void setTrainCar(org.example.railsearch.TrainCar trainCar) {
+    public void setTrainCar(TrainCar trainCar) {
         this.trainCar = trainCar;
     }
 

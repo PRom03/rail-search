@@ -1,8 +1,6 @@
-package org.example.railsearch;
+package org.example.railsearch.Entities;
 
 import jakarta.persistence.*;
-import org.example.railsearch.Entities.Station;
-import org.example.railsearch.Entities.Train;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -17,23 +15,35 @@ public class TravelStage {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "station_from_id", nullable = false)
-    private Station stationFrom;
+    @JoinColumn(name = "stop_from_id", nullable = false)
+    private Stop stopFrom;
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "station_to_id", nullable = false)
-    private Station stationTo;
+    @JoinColumn(name = "stop_to_id", nullable = false)
+    private Stop stopTo;
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "ticket_id", nullable = false)
     private Ticket ticket;
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "train_id", nullable = false)
-    private Train train;
+    @JoinColumn(name = "train_date_id", nullable = false)
+    private TrainDate trainDate;
 
     @Column(name = "distance", precision = 10, scale = 2)
     private BigDecimal distance;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "seat_train_date_id")
+    private SeatTrainDate seatTrainDate;
+
+    public SeatTrainDate getSeatTrainDate() {
+        return seatTrainDate;
+    }
+
+    public void setSeatTrainDate(SeatTrainDate seatTrainDate) {
+        this.seatTrainDate = seatTrainDate;
+    }
 
     public Integer getId() {
         return id;
@@ -43,20 +53,20 @@ public class TravelStage {
         this.id = id;
     }
 
-    public Station getStationFrom() {
-        return stationFrom;
+    public Stop getStopFrom() {
+        return stopFrom;
     }
 
-    public void setStationFrom(Optional<Station> stationFrom) {
-        this.stationFrom = stationFrom.orElse(null);
+    public void setStopFrom(Optional<Stop> stopFrom) {
+        this.stopFrom = stopFrom.orElse(null);
     }
 
-    public Station getStationTo() {
-        return stationTo;
+    public Stop getStopTo() {
+        return stopTo;
     }
 
-    public void setStationTo(Optional<Station> stationTo) {
-        this.stationTo = stationTo.orElse(null);
+    public void setStopTo(Optional<Stop> stopTo) {
+        this.stopTo = stopTo.orElse(null);
     }
 
     public Ticket getTicket() {
@@ -67,13 +77,7 @@ public class TravelStage {
         this.ticket = ticket.orElse(null);
     }
 
-    public Train getTrain() {
-        return train;
-    }
 
-    public void setTrain(Optional<Train> train) {
-        this.train = train.orElse(null);
-    }
 
     public BigDecimal getDistance() {
         return distance;
@@ -83,4 +87,11 @@ public class TravelStage {
         this.distance = distance;
     }
 
+    public TrainDate getTrainDate() {
+        return trainDate;
+    }
+
+    public void setTrainDate(Optional<TrainDate> trainDate) {
+        this.trainDate = trainDate.orElse(null);
+    }
 }

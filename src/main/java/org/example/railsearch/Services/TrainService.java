@@ -44,16 +44,16 @@ public class TrainService {
     public record OnboardingTrain(Train train, Stop onboardingStop, LocalTime time) {}
 
     public record ConnectionSegment(
-            Station fromStation,
+            Stop stopFrom,
             LocalTime departure,
-            Station toStation,
+            Stop stopTo,
             LocalTime arrival,
             Train train
     ) {
         @Override
         public String toString() {
-            return fromStation.getName() + " " + departure +
-                    " → " + toStation.getName() + " " + arrival +
+            return stopFrom.getStation().getName() + " " + departure +
+                    " → " + stopTo.getStation().getName() + " " + arrival +
                     " (" + train.getName() + ")";
         }
     }
@@ -139,6 +139,7 @@ public class TrainService {
             if(!isTrainOfOneOfTransporters(train,transporters)) continue;
 
             Stop onboardingStop = onboardingTrain.onboardingStop();
+
             LocalTime onboardingTime = onboardingTrain.time();
             Long bestKnown = bestTimeByStationAndTrainId.get(new Pair<>(onboardingStop.getStation().getId(),train.getId()));
             if (bestKnown != null && bestKnown<Duration.between(startTime2,onboardingTime).toMinutes()){
@@ -236,12 +237,12 @@ public class TrainService {
             LocalTime depTime = getStopTime(departureStop, false);
 
             ConnectionSegment seg = new ConnectionSegment(
-                    departureStop.getStation(), depTime,
-                    arrivalStop.getStation(), arrivalTime,
+                    departureStop, depTime,
+                    arrivalStop, arrivalTime,
                     currentTrain
             );
 
-            if (!seg.fromStation().getId().equals(seg.toStation().getId())) {
+            if (!seg.stopFrom().getStation().getId().equals(seg.stopTo().getStation().getId())) {
                 path.add(seg);
             }
 

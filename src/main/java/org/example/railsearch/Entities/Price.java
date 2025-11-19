@@ -22,7 +22,7 @@ public class Price {
     @Column(name = "price", nullable = false, precision = 5, scale = 2)
     private BigDecimal price;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "transporter_id", nullable = false)
     private Transporter transporter;
 

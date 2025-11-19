@@ -1,7 +1,9 @@
-package org.example.railsearch;
+package org.example.railsearch.Entities;
 
 import jakarta.persistence.*;
-import org.example.railsearch.Entities.Train;
+
+import java.sql.Date;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "train_date", schema = "public")
@@ -12,17 +14,14 @@ public class TrainDate {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "train_id")
     private Train train;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "date")
-    private Date date;
+    @Column(name = "date")
+    private LocalDate date;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "seat_id")
-    private Seat seat;
+
 
     public Integer getId() {
         return id;
@@ -40,20 +39,13 @@ public class TrainDate {
         this.train = train;
     }
 
-    public Date getDate() {
+    public LocalDate getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
+    public void setDate(LocalDate date) {
         this.date = date;
     }
 
-    public Seat getSeat() {
-        return seat;
-    }
-
-    public void setSeat(Seat seat) {
-        this.seat = seat;
-    }
-
+    
 }

@@ -3,20 +3,20 @@ package org.example.railsearch.Services;
 import org.example.railsearch.Entities.Station;
 import org.example.railsearch.Entities.Stop;
 import org.example.railsearch.Entities.Train;
-import org.example.railsearch.Repositories.*;
+import org.example.railsearch.Repositories.StationRepository;
+import org.example.railsearch.Repositories.StopRepository;
 import org.javatuples.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.relational.core.sql.In;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
-public class TrainServiceOld {
-    @Autowired
-    private TrainRepository trainRepository;
+public class TrainServiceNew {
+
     @Autowired
     private StationRepository stationRepository;
     @Autowired
@@ -27,18 +27,15 @@ public class TrainServiceOld {
 
 
 
-        public Train getTrainByName(String name){
-            return trainRepository.getTrainByName(name);
-        }
 
-private LocalTime getStopTime(Stop stop, boolean trueIfArrivalElseDeparture) {
-    LocalTime true_ = trueIfArrivalElseDeparture ? stop.getArrivalTime() : stop.getDepartureTime();
-    LocalTime else_ = trueIfArrivalElseDeparture ? stop.getDepartureTime() : stop.getArrivalTime();
-    return true_ != null ? true_ : else_;
-}
+    private LocalTime getStopTime(Stop stop, boolean trueIfArrivalElseDeparture) {
+        LocalTime true_ = trueIfArrivalElseDeparture ? stop.getArrivalTime() : stop.getDepartureTime();
+        LocalTime else_ = trueIfArrivalElseDeparture ? stop.getDepartureTime() : stop.getArrivalTime();
+        return true_ != null ? true_ : else_;
+    }
 
 
-    public record TrainWithStop(Train train, Stop stop) {}
+    public record OnboardingTrain(Train train, Station station) {}
 
     public record ConnectionSegment(
             Station fromStation,
@@ -54,14 +51,15 @@ private LocalTime getStopTime(Stop stop, boolean trueIfArrivalElseDeparture) {
                     " (" + train.getName() + ")";
         }
     }
-    public boolean isTrainOfOneOfTransporters(Train t,List<String> transporters) {
+    public boolean isNotTrainOfOneOfTransporters(Train t,List<String> transporters) {
         for (String transporter : transporters) {
             if (t.getName().split(" ")[0].equals(transporter)) {
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
+
     public List<ConnectionSegment> findFastestConnection(
             String stationFrom,
             String stationTo,
@@ -74,17 +72,15 @@ private LocalTime getStopTime(Stop stop, boolean trueIfArrivalElseDeparture) {
 
         final Duration minTimeTrainChange = Duration.ofMinutes(5);
 
-        //PriorityQueue<OnboardingTrain> pq = new PriorityQueue<>(Comparator.comparing(onboardingTrain -> onboardingTrain.time));
-        Map<Pair<Integer,Integer>, Long> bestTimeByTrainId = new HashMap<>();
-        Map<Integer, TrainWithStop> prevTrainWithStopByTrainId = new HashMap<>();
-        Map<Integer, TrainWithStop> trainWithStopByTrainId = new HashMap<>();
-        Map<TrainWithStop, Long> queue= new HashMap<>();
-        Map<Integer, Stop> prevStopByStop = new HashMap<>();
+        PriorityQueue<Pair<Station,Pair<Stop,Long>>> queue = new PriorityQueue<>(Comparator.comparing(q -> q.getValue1().getValue1()));
+        Map<Integer, Long> bestTimeByStationId = new HashMap<>();
+        Map<Integer, OnboardingTrain> prevOnboardingTrainByTrainId = new HashMap<>();
+        Map<Integer, OnboardingTrain> onboardingTrainByTrainId = new HashMap<>();
+        Map<OnboardingTrain,Stop> onboardingStopByTrain = new HashMap<>();
+        //Map<OnboardingTrain, Pair<Stop,Long>> queue= new HashMap<>();
+        Map<Integer, Stop> prevStopByDepartureStop = new HashMap<>();
         Stop foundArrivalStop = null;
         Train foundTrain = null;
-        LocalTime startTime2 = startTime;
-        Station fromSt = stationRepository.findStationByName(stationFrom);
-        Station destSt=stationRepository.findStationByName(stationTo);
 
         List<Stop> startStops = stopRepository.findDeparturesFromStationAfter(startStation.getId(), startTime);
         for (Stop s : startStops) {
@@ -95,18 +91,18 @@ private LocalTime getStopTime(Stop stop, boolean trueIfArrivalElseDeparture) {
 //            System.out.println("trainId"+train.getId());
 //
 //            System.out.println("trainName "+train.getName());
-            TrainWithStop trainWithStop=new TrainWithStop(train, s);
-            Long best = bestTimeByTrainId.get(train.getId());
-            if(!isTrainOfOneOfTransporters(s.getTrain(),transporters)) continue;
+            OnboardingTrain onboardingTrain = new OnboardingTrain(train, s.getStation());
+            Long best = bestTimeByStationId.get(s.getStation().getId());
+            if(isNotTrainOfOneOfTransporters(s.getTrain(), transporters)) continue;
             Long timeBetween = Duration.between(startTime, departureTime).toMinutes();
             if (best==null ||timeBetween<best ) {
-                    bestTimeByTrainId.put(new Pair<>(s.getStation().getId(),train.getId()), timeBetween);
-                    //pq.add(onboardingTrain);
-                    queue.put( trainWithStop,timeBetween);
-                    prevTrainWithStopByTrainId.put(train.getId(), null);
-                    trainWithStopByTrainId.put(train.getId(), trainWithStop);
-                    prevStopByStop.put(s.getId(), trainWithStop.stop());
-                }
+                bestTimeByStationId.put(s.getStation().getId(), timeBetween);
+                queue.add(new Pair<>(s.getStation(),new Pair<>(s,timeBetween)));
+                prevOnboardingTrainByTrainId.put(train.getId(), null);
+                onboardingStopByTrain.put(onboardingTrain,s);
+                onboardingTrainByTrainId.put(train.getId(), onboardingTrain);
+                prevStopByDepartureStop.put(s.getId(), s);
+            }
 
         }
         System.out.println("Queue size: "+queue.size());
@@ -117,63 +113,50 @@ private LocalTime getStopTime(Stop stop, boolean trueIfArrivalElseDeparture) {
 
         while (!queue.isEmpty()) {
             System.out.println("qsize "+queue.size());
-            Map.Entry<TrainWithStop,Long> u = null;
-            for (Map.Entry<TrainWithStop,Long> entry : queue.entrySet()) {
-                if (u == null || entry.getValue()<(u.getValue())) {
-                    u= entry;
-                }
+            var u=queue.poll();
+            Train train = u.getValue1().getValue0().getTrain();
+            if(isNotTrainOfOneOfTransporters(train, transporters)) continue;
+
+            Stop onboardingStop = u.getValue1().getValue0();
+
+
+            if (onboardingStop.getStation().getId().equals(endStation.getId())) {
+                foundArrivalStop = onboardingStop;
+                foundTrain = train;
+                break;
             }
-
-            queue.remove(u.getKey());
-
-            var trainWithStop=u.getKey();
-            Train train = trainWithStop.train();
-            if(!isTrainOfOneOfTransporters(train,transporters)) continue;
-
-            Stop stop = trainWithStop.stop();
-            LocalTime time = getStopTime(stop,true);
-            Long bestKnown = bestTimeByTrainId.get(new Pair<>(stop.getStation().getId(),train.getId()));
-            if (bestKnown != null && bestKnown<Duration.between(startTime2,time).toMinutes()){
+            Long onboardingTime = u.getValue1().getValue1();
+            Long bestKnown = bestTimeByStationId.get(onboardingStop.getStation().getId());
+            if (bestKnown != null && bestKnown<onboardingTime){
                 continue;
             }
 
             List<Stop> stopsOfTrain = stopRepository.findStopsByTrainOrdered(train.getId());
 
-            int stopIndex = -1;
+            int onboardingStopIndex = -1;
             for (int i = 0; i < stopsOfTrain.size(); i++) {
-                if (stopsOfTrain.get(i).getId().equals(stop.getId())) { stopIndex = i; break; }
+                if (stopsOfTrain.get(i).getId().equals(onboardingStop.getId())) { onboardingStopIndex = i; break; }
             }
-            if (stopIndex == -1) continue;
+            if (onboardingStopIndex == -1) continue;
 //            LocalTime timeArriv=getStopTime(stopsOfTrain.get(onboardingStopIndex),true);
 //            if(timeArriv!=null) startTime2=timeArriv;
-            for (int j = stopIndex + 1; j < stopsOfTrain.size(); j++) {
-                Stop nextStop = stopsOfTrain.get(j);
-                LocalTime arrivalAtNext = getStopTime(nextStop, true);
-                if (arrivalAtNext == null) continue;
 
-                if (nextStop.getStation().getId().equals(endStation.getId())) {
-                    foundArrivalStop = nextStop;
-                    foundTrain = train;
-                    break;
-
-
-				}
-
-
-            }
-            if (foundArrivalStop != null) break;
+            //if (foundArrivalStop != null) break;
             System.out.println("--------");
-            
-            for (int j = stopIndex + 1; j < stopsOfTrain.size(); j++) {
+
+            for (int j = onboardingStopIndex + 1; j < stopsOfTrain.size(); j++) {
                 Stop stop2 = stopsOfTrain.get(j);
                 LocalTime arrival2 = getStopTime(stop2, true);
                 if (arrival2 == null) continue;
-
+                System.out.println("station: "+stop2.getStation().getName()+", train: "+stop2.getTrain().getName());
+//                List<Station> stopsOfTrain2=stopsOfTrain.subList(0,j+1).stream().map(Stop::getStation).toList();
+//                stationsVisited.addAll(stopsOfTrain2);
                 LocalTime earliestDeparture = arrival2.plus(minTimeTrainChange);
                 List<Stop> consideredDepartures =
                         stopRepository.findDeparturesFromStationAfter(stop2.getStation().getId(), earliestDeparture);
 
                 for (Stop departureStop : consideredDepartures) {
+
                     if (departureStop.getTrain().getId().equals(train.getId())) continue;
 
                     LocalTime departureTime = getStopTime(departureStop, false);
@@ -181,19 +164,20 @@ private LocalTime getStopTime(Stop stop, boolean trueIfArrivalElseDeparture) {
 
                     Train nextTrain = departureStop.getTrain();
 
-                    if(!isTrainOfOneOfTransporters(nextTrain,transporters)) continue;
 
-                    Long known = bestTimeByTrainId.get(new Pair<>(departureStop.getStation().getId(),nextTrain.getId()));
-                    var timeBetween = Duration.between(startTime2,departureTime).toMinutes();
-                    if ((known==null || timeBetween<known)&& stop2.getId()<departureStop.getId()) {
-                        bestTimeByTrainId.put(new Pair<>(departureStop.getStation().getId(),nextTrain.getId()), timeBetween);
-                        TrainWithStop next = new TrainWithStop(nextTrain, departureStop);
-                        //pq.add(next);
+                    if(isNotTrainOfOneOfTransporters(nextTrain, transporters)) continue;
+                    Long known = bestTimeByStationId.get(departureStop.getStation().getId());
+                    var timeBetween = Duration.between(startTime,departureTime).toMinutes();
 
-                        queue.put(next, timeBetween);
-                        prevTrainWithStopByTrainId.put(nextTrain.getId(), trainWithStop);
-                        prevStopByStop.put(departureStop.getId(), stop2);
-                        trainWithStopByTrainId.put(nextTrain.getId(), next);
+                    if ((known==null || timeBetween<known)/*&& stop2.getId()<departureStop.getId()*/) {
+                        bestTimeByStationId.put(departureStop.getStation().getId(), timeBetween);
+                        OnboardingTrain next = new OnboardingTrain(nextTrain, departureStop.getStation());
+                        queue.add(new Pair<>(departureStop.getStation(), new Pair<>(departureStop,timeBetween)));
+                        prevOnboardingTrainByTrainId.put(nextTrain.getId(), new OnboardingTrain(train, onboardingStop.getStation()));
+                        prevStopByDepartureStop.put(departureStop.getId(), stop2);
+                        onboardingStopByTrain.put(next,departureStop);
+
+                        onboardingTrainByTrainId.put(nextTrain.getId(), next);
 
                     }
                 }
@@ -204,18 +188,18 @@ private LocalTime getStopTime(Stop stop, boolean trueIfArrivalElseDeparture) {
         }
 
         List<ConnectionSegment> path = new ArrayList<>();
-        System.out.println("found: "+foundTrain.getName());
+
         Train currentTrain = foundTrain;
         Stop arrivalStop = foundArrivalStop;
         LocalTime arrivalTime = getStopTime(arrivalStop, true);
 
         while (currentTrain != null) {
             System.out.println("curr: "+currentTrain.getName());
-            TrainWithStop trainWithStop= trainWithStopByTrainId.get(currentTrain.getId());
-            if (trainWithStop == null) {
+            OnboardingTrain onboardingTrain = onboardingTrainByTrainId.get(currentTrain.getId());
+            if (onboardingTrain == null) {
                 break;
             }
-            Stop departureStop = trainWithStop.stop();
+            Stop departureStop = onboardingStopByTrain.get(onboardingTrain);
             LocalTime depTime = getStopTime(departureStop, false);
 
             ConnectionSegment seg = new ConnectionSegment(
@@ -228,18 +212,18 @@ private LocalTime getStopTime(Stop stop, boolean trueIfArrivalElseDeparture) {
                 path.add(seg);
             }
 
-            TrainWithStop trainWithStopPrev = prevTrainWithStopByTrainId.get(currentTrain.getId());
-            if (trainWithStopPrev == null) {
+            OnboardingTrain onboardingTrainPrev = prevOnboardingTrainByTrainId.get(currentTrain.getId());
+            if (onboardingTrainPrev == null) {
                 break;
             }
 
-            Stop prevArrivalStop = prevStopByStop.get(departureStop.getId());
+            Stop prevArrivalStop = prevStopByDepartureStop.get(departureStop.getId());
             if (prevArrivalStop == null) {
                 break;
             }
             arrivalStop = prevArrivalStop;
             arrivalTime = getStopTime(arrivalStop, true);
-            currentTrain = trainWithStopPrev.train();
+            currentTrain = onboardingTrainPrev.train();
         }
 
         Collections.reverse(path);
@@ -251,7 +235,7 @@ private LocalTime getStopTime(Stop stop, boolean trueIfArrivalElseDeparture) {
             String stationTo,
             LocalTime startTime,
             List<String> transporters) {
-        List<List<ConnectionSegment>> results = new ArrayList<>();
+        ArrayList<List<ConnectionSegment>> results = new ArrayList<>();
         LocalTime endOfDay = LocalTime.of(23, 59, 59);
         LocalTime searchFrom = startTime;
 
@@ -259,8 +243,8 @@ private LocalTime getStopTime(Stop stop, boolean trueIfArrivalElseDeparture) {
         Set<LocalTime> firstDepartures = new HashSet<>();
 
         while (!searchFrom.isAfter(endOfDay)) {
-            List<ConnectionSegment> res = findFastestConnection(stationFrom, stationTo, searchFrom,transporters);
-            if (res == null || res.isEmpty()) break;
+            List<ConnectionSegment> res = new ArrayList<>(findFastestConnection(stationFrom, stationTo, searchFrom,transporters));
+            if (res.isEmpty()) break;
 
             LocalTime firstDeparture = res.get(0).departure();
             if (firstDepartures.contains(firstDeparture)) {
@@ -275,8 +259,7 @@ private LocalTime getStopTime(Stop stop, boolean trueIfArrivalElseDeparture) {
 
             if (searchFrom.isAfter(endOfDay)) break;
         }
-
-        return results;
+return results;
     }
 
 }

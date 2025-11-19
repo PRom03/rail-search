@@ -3,9 +3,9 @@ package org.example.railsearch;
 import java.math.BigDecimal;
 
 public record TravelStageCreateDto(
-        Long stationFromId,
-        Long stationToId,
+        Long stopFromId,
+        Long stopToId,
         Long ticketId,
-        Long trainId,
+        Long trainDateId,
         BigDecimal distance
 ) {};

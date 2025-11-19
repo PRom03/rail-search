@@ -23,7 +23,7 @@ public class DistanceService {
     @Autowired
     private StopService stopService;
     @Autowired
-    private TrainServiceOld trainService;
+    private TrainService trainService;
     @Autowired
     private TrainRepository trainRepository;
 
